@@ -1,0 +1,37 @@
+
+  -----------------------------------------------------------------------------
+
+                   --- CAEN SpA - Computing Division ---
+
+  -----------------------------------------------------------------------------
+
+  QTPD_DAQ Release Notes
+
+  -----------------------------------------------------------------------------
+  
+  Rel. 1.1	 - July 2022
+  Rel. 1.0   - February 2020 - First official Release
+
+  -----------------------------------------------------------------------------
+
+
+  Description
+  -----------
+
+  This file describes the revision history of QTPD_DAQ, a sample program for
+  the CAEN QTP boards.
+  See the fileREADME.txt for more informations.
+
+  System Requirements
+  -------------------
+  - Linux 32/64Bit
+  - CAENVME Library
+
+  How to get support
+  ------------------
+
+  Our Software Support Group is available for questions, support and any other
+  software related issue concerning CAEN products; for software support visit 
+  the page https://www.caen.it/support-services/support-form or send an email 
+  to support.computing@caen.it 
+
