@@ -1,13 +1,31 @@
 /******************************************************************************
- DAQ program of V792NC QDC with V4718 Bridge
+ DAQ program of V792N QDC with V4718 Bridge
+
+ 2023.03.27 KNU
+ edited by Min Sang RYU
+ << New features >>
+1) path and name of "output data files (List, Raw, Histo, log)" are changed
+   ./data/V792nQDC_EventList.txt  
+          V792nQDC_Histo_ch0.txt
+          ...
+          V792nQDC_Histo_ch15.txt
+          V792nQDC_RawData.txt
+          V792nQDC_histo.txt
+          V792nQDC_log.txt
+
+2) structure of output file (V792nQDC_EventList.txt  )
+Evetn Num.   ch0     ch1     ch2     ch3     ch4     ch5     ch6     ch7     ch8     ch9    ch10    ch11    ch12    ch13    ch14    ch15  
+        0    451     605      69      97      57      70      82      92      84      91      60      71      71      86      78      69 
+        1    556     985      69      97      58      69      83      92      84      91      60      72      71      87      78      69 
+        2    313     502      68      97      57      70      82      92      85      91      60      71      71      86      77      69 
 
 
  2023.02.08 KNU
  edited by Min Sang RYU
  << New features >>
- 1) V792NC QDC test run OK
+ 1) V792N QDC test run OK
  2) V775N TDC test run OK (COM. START MODE)
- 3) gnuplot - excuting error 
+ 3) gnuplot - auto-display
 
  ///// please read ReadMe_ryu.txt /////
 
@@ -74,6 +92,7 @@ Supported Discriminator Models: V812, V814, V895
 #include "Console.h"
 
 char path[128];
+char DataPath[128];
 
 /****************************************************/
 
@@ -89,7 +108,8 @@ char path[128];
 
 #define LOGMEAS_NPTS		1000
 
-#define ENABLE_LOG			0
+//#define ENABLE_LOG			0
+#define ENABLE_LOG			1
 
 #ifdef WIN32
 #define FILES_IN_LOCAL_FOLDER	0
@@ -193,7 +213,8 @@ int SaveHistograms(uint32_t histo[32][4096], int numch)
 	for(j=0; j<numch; j++) {
 		FILE *fout;
 		char fname[100];
-		sprintf(fname, "%s\\Histo_%d.txt",path,  j);
+		//		sprintf(fname, "%s\\Histo_%d.txt",path,  j);
+		sprintf(fname, "%sV792nQDC_Histo_%d.txt",DataPath,  j);
 		fout = fopen(fname, "w"); 
 		for(i=0; i<4096; i++) 
 			fprintf(fout, "%d\n", (int)histo[j][i]);
@@ -399,6 +420,7 @@ int main(int argc, char *argv[])
 #if FILES_IN_LOCAL_FOLDER
 	//	sprintf(path,".");
 	sprintf(path,"./");
+	sprintf(DataPath,"./data/");
 #else
 #ifdef  WIN32	
 	sprintf(path,"%s\\QTPD_DAQ", getenv("USERPROFILE"));
@@ -406,6 +428,7 @@ int main(int argc, char *argv[])
 #else
 	//	sprintf(path,".");
 	sprintf(path,"./");
+	sprintf(DataPath,"./data/");
 #endif	
 #endif
 
@@ -558,15 +581,15 @@ int main(int argc, char *argv[])
 	if (EnableListFile) {
 		char tmp[255];
 		//		sprintf(tmp, "%s\\List.txt", path);
-		sprintf(tmp, "%sList.txt", path);
+		sprintf(tmp, "%sV792nQDC_EventList.txt", DataPath);
 		if ((of_list=fopen(tmp, "w")) == NULL) 
 			printf("Can't open list file for writing\n");
 	}
 	if (EnableRawDataFile) {
 		char tmp[255];
 		//		sprintf(tmp, "%s\\RawData.txt", path);
-		sprintf(tmp, "%sRawData.txt", path);
-		if ((of_raw=fopen(tmp, "wb")) == NULL)
+		sprintf(tmp, "%sV792nQDC_RawData.txt", DataPath);
+		if ((of_raw=fopen(tmp, "wb")) == NULL) // binary
 			printf("Can't open raw data file for writing\n");
 	}
 
@@ -595,7 +618,7 @@ int main(int argc, char *argv[])
 	if (ENABLE_LOG) {
 		char tmp[255];
 		//		sprintf(tmp, "%s\\qtp_log.txt", path);
-		sprintf(tmp, "%sqtp_log.txt", path);
+		sprintf(tmp, "%sV792nQDC_log.txt", DataPath);
 		printf("Log file is enabled\n");
 		logfile = fopen(tmp,"w");
 	}
@@ -739,7 +762,7 @@ int main(int argc, char *argv[])
 			totnb = 0;
 			printf("\n\n");
 			//			sprintf(histoFileName, "%s\\histo.txt", path);
-			sprintf(histoFileName, "%shisto.txt", path);
+			sprintf(histoFileName, "%sV792nQDC_histo.txt", DataPath);
 			fh = fopen(histoFileName,"w");
 			for(i=0; i<4096; i++) {
 				fprintf(fh, "%d\n", (int)histo[ch][i]);
@@ -751,7 +774,7 @@ int main(int argc, char *argv[])
 			fprintf(gnuplot, "set grid\n");
 			fprintf(gnuplot, "set title 'Ch. %d (Rate = %.3fKHz, counts = %d)'\n", ch, rate, ns[ch]);
 			//			fprintf(gnuplot, "plot '%s\\histo.txt' with step\n",path);
-			fprintf(gnuplot, "plot '%shisto.txt' with step\n",path);
+			fprintf(gnuplot, "plot '%sV792nQDC_histo.txt' with step\n", DataPath);
 			fflush(gnuplot);
 			printf("[q] quit  [r] reset statistics  [s] save histograms [c] change plotting channel\n");
 			PrevPlotTime = CurrentTime;
@@ -823,10 +846,13 @@ int main(int argc, char *argv[])
 			} else {
 				DataType = DATATYPE_HEADER;
 				if (of_list != NULL) {
-					fprintf(of_list, "Event Num. %d\n", buffer[pnt] & 0xFFFFFF);
+				  //		fprintf(of_list, "Event Num. %d\n", buffer[pnt] & 0xFFFFFF);
+				  fprintf(of_list, "\nEvent Num. %6d", buffer[pnt] & 0xFFFFFF);
 					for(i=0; i<32; i++) {
 						if (ADCdata[i] != 0xFFFF)
-							fprintf(of_list, "Ch %2d: %d\n", i, ADCdata[i]);
+						  //	fprintf(of_list, "Ch %2d: %d\n", i, ADCdata[i]);
+						  // write only ADCdata[i] of ch0~15
+						  fprintf(of_list, " %6d ", ADCdata[i]); 
 					}
 				}
 			}
